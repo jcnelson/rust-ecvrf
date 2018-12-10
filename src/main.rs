@@ -17,7 +17,7 @@ use ed25519_dalek::SecretKey as ed25519_PrivateKey;
 
 use curve25519_dalek::ristretto::{RistrettoPoint, CompressedRistretto};
 use curve25519_dalek::scalar::Scalar as ed25519_Scalar;
-use curve25519_dalek::constants::{RISTRETTO_BASEPOINT_POINT, RISTRETTO_BASEPOINT_TABLE};
+use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
 use curve25519_dalek::edwards::{CompressedEdwardsY, EdwardsPoint};
 
 use sha2::Digest;
@@ -114,8 +114,7 @@ pub fn ECVRF_hash_to_curve(y: &ed25519_PublicKey, alpha: &Vec<u8>) -> Result<Ris
     let mut hasher = Sha512::new();
     let mut result = [0u8; 64];        // encodes 2 field elements from the hash
 
-    hasher.input(&[SUITE]);
-    hasher.input(&[1]);
+    hasher.input(&[SUITE, 0x01]);
     hasher.input(&pk_bytes[..]);
     hasher.input(&alpha[..]);
     
@@ -136,8 +135,7 @@ fn ECVRF_hash_points(p1: &RistrettoPoint, p2: &RistrettoPoint, p3: &RistrettoPoi
     let p3_bytes = ECVRF_point_to_string(p3);
     let p4_bytes = ECVRF_point_to_string(p4);
 
-    hasher.input(&[SUITE]);
-    hasher.input(&[2]);
+    hasher.input(&[SUITE, 0x02]);
     hasher.input(&p1_bytes[..]);
     hasher.input(&p2_bytes[..]);
     hasher.input(&p3_bytes[..]);
@@ -212,7 +210,7 @@ pub fn ECVRF_prove(secret: &ed25519_PrivateKey, alpha: &Vec<u8>) -> Result<ECVRF
     let Gamma_point = &x_scalar * &H_point;
     let k_scalar = ECVRF_nonce_generation(&trunc_hash, &H_point);
 
-    let kB_point = &k_scalar * &RISTRETTO_BASEPOINT_TABLE;
+    let kB_point = &k_scalar * &RISTRETTO_BASEPOINT_POINT;
     let kH_point = &k_scalar * &H_point;
 
     let c_hashbuf = ECVRF_hash_points(&H_point, &Gamma_point, &kB_point, &kH_point);
